@@ -1,0 +1,173 @@
+<html>  
+  <head>    
+    
+    <title>Technology Management System</title>    
+    
+  	<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.4/angular.js"></script>  
+      <link id="appCSS" href="css/techmgmt.css" rel="stylesheet">
+    
+ 	<script type="text/javascript">  
+            var app = angular.module("technologyManagement", []);  
+           
+            //Controller Part  
+            app.controller("technologyController", function($scope, $http) {  
+           
+                 
+                 $scope.operation="";
+                 
+                $scope.technologies = [];  
+                $scope.technologyForm = {  
+                    id : -1,  
+                    name : "",  
+                    company : ""  ,
+                    year : ""
+                };  
+           
+                //Now load the data from server  
+                _refreshtechnologyData();  
+           
+                //HTTP POST/PUT methods for add/edit technology   
+                // with the help of id, we are going to find out whether it is put or post operation  
+                  
+                $scope.submitTechnology = function() {  
+           
+                    var method = "";  
+                    var url = "";  
+                    if ($scope.technologyForm.id == -1) {  
+                        //Id is absent in form data, it is create new technology operation  
+                        method = "POST";  
+                        url = '/TechnologyManagement/addTechnology';  
+                        $scope.operation="Add";
+                    } else {  
+                        //Id is present in form data, it is edit technology operation  
+                        method = "PUT";  
+                        url = '/TechnologyManagement/updTechnology';  
+                    }  
+           
+                    $http({  
+                        method : method,  
+                        url : url,  
+                        data : angular.toJson($scope.technologyForm),  
+                        headers : {  
+                            'Content-Type' : 'application/json'  
+                        }  
+                    }).then( _success, _error );  
+                };  
+           
+                //HTTP DELETE- delete technology by Id  
+                $scope.deleteTechnology = function(technology) { 
+                	$scope.operation="Delete";
+                    $http({  
+                        method : 'DELETE',  
+                        url : '/TechnologyManagement/delTechnology/' + technology.id  
+                    }).then(_success, _error);  
+                };  
+   
+             // In case of edit, populate form fields and assign form.id with technology id  
+                $scope.editTechnology = function(technology) {  
+                    
+                    $scope.technologyForm.name = technology.name;  
+                    $scope.technologyForm.company = technology.company;  
+                    $scope.technologyForm.id = technology.id;  
+                    $scope.technologyForm.year = technology.year;
+                    $scope.operation="Update";
+                    $scope.errMsg="";
+                    $scope.successMsg="";
+                };  
+           
+                /* Private Methods */  
+                //HTTP GET- get all technologys collection  
+                function _refreshtechnologyData() {  
+                    $http({  
+                        method : 'GET',  
+                        url : 'http://localhost:8080/TechnologyManagement/technologies'  
+                    }).then(function successCallback(response) {  
+                        $scope.technologies = response.data;  
+                    }, function errorCallback(response) {  
+                        console.log(response.statusText);  
+                    });  
+                }  
+           
+                function _success(response) {  
+                    _refreshtechnologyData();  
+                    $scope.successMsg=$scope.operation +" Successful";
+                    
+                    $scope.errMsg="";
+                    $scope.operation="";
+                    $scope._clearFormData()  
+                }  
+           
+                function _error(response) {  
+                	$scope.errMsg=="";
+                	$scope.successMsg=$scope.operation +" Failed";
+                	$scope.operation="";
+                    console.log(response.statusText);  
+                }  
+           
+                //Clear the form  
+                $scope._clearFormData = function()  {  
+                    $scope.technologyForm.id = -1;  
+                    $scope.technologyForm.name = "";  
+                    $scope.technologyForm.company = "";  
+                    $scope.technologyForm.year = "";
+                    
+                    $scope.operation="";
+                  
+                };  
+            });  
+        </script>  
+          <head/>  
+    <body ng-app="technologyManagement" ng-controller="technologyController">  
+         <h1>  
+           Technology Management System.  
+        </h1>   
+        
+        <div class="errorClass" ng-model="errMsg">{{errMsg}}</div>
+        <div class="successClass" ng-model="successMsg">{{successMsg}}</div>
+        
+        <form ng-submit="submitTechnology()">  
+            <table>  
+                 
+                <tr>  
+                    <th colspan="2">Add/Edit technology</th>  
+                 </tr>  
+                <tr>  
+                    <td>Technology Name</td>  
+                    <td><input type="text" ng-model="technologyForm.name" required/>
+                    <span ng-show="technologyForm.name.$touched && technologyForm.name.$invalid">The name is required.</span></td>  
+                </tr>  
+                <tr>  
+                    <td>Company</td>  
+                    <td><input type="text" ng-model="technologyForm.company"  /></td>  
+                </tr>  
+                <tr>  
+                    <td>Year</td>  
+                    <td><input type="text" ng-model="technologyForm.year"  /></td>  
+                </tr>  
+                <tr>  
+                    <td><input type="submit" value="Submit" class="blue-button" /></td>
+                    <td><input type="button" value="Reset" class="blue-button" ng-click="_clearFormData()" /></td>  
+                </tr>  
+            </table>  
+        </form>  
+        <table>  
+            <tr>  
+                
+                <th>Name</th>  
+                <th>Company</th>  
+                <th>Year</th>  
+                <th>Operations</th>  
+                 
+            </tr>  
+   
+            <tr ng-repeat="technology in technologies">  
+                 
+    			<td> {{ technology.name }}</td>  
+    			<td >{{ technology.company }}</td>    
+                <td >{{ technology.year }}</td>    
+                <td><a ng-click="editTechnology(technology)" class="blue-button">Edit</a> | <a ng-click="deleteTechnology(technology)" class="red-button">Delete</a></td>  
+            </tr>  
+   
+        </table>  
+  </body>  
+</html>  
